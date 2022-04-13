@@ -28,7 +28,8 @@ def create_new_token() -> str:
 
 
 # Check if Token is present and Valide
-if not TokenManager.token_is_valid:
+TokenManager = TokenManager()
+if not TokenManager.token_is_valid():
     print("Your token is out of date please enter credential to get a new one")
     token = create_new_token()
 else:
@@ -44,7 +45,7 @@ else:
             token = create_new_token()
         else:
             print("Your Token will expire at " + TokenManager.get_expire_date(token, "%H:%M:%S"))
-        
+
 client = BackendApplicationClient(client_id=client_id)
 api = OAuth2Session(client=client)
 token = api.fetch_token(token_url='https://api.intra.42.fr/oauth/token', client_id=client_id,

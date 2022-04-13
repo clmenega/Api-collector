@@ -1,15 +1,17 @@
 import datetime
+import os
 import os.path as path
-import os.listdir as listdir
-import os.mkdir as mkdir
-import os.remove as remove
+# #import os.listdir as listdir
+# import os.mkdir as mkdir
+# import os.remove as remove
 import requests
 import time
 from requests_oauthlib import OAuth2Session
 from oauthlib.oauth2 import BackendApplicationClient
 from typing import Dict, Any
+from pathlib import Path
 
-_TOKEN_DIR = '~/.Api_Collector'
+_TOKEN_DIR = path.expanduser('~/.Api_Collector')
 _TOKEN_FILE_NAME = 'token.txt'
 _FT_TOKEN_URL = "https://api.intra.42.fr/oauth/token"
 _FT_TOKEN_INFO_URL = _FT_TOKEN_URL + "/info"
@@ -20,19 +22,14 @@ JsonDict = Dict[str, Any]
 
 # create directory if not exist
 def _create_dir(dir_path) -> bool:
-    if not path.isdir(dir_path):
-        mkdir(path.expanduser(dir_path))
+    if not path.isdir(path.expanduser(dir_path)):
+        os.mkdir(path.expanduser(dir_path))
 
 
 class TokenManager:
-    def __init__(self, token_dir: str, _token_file_name):
-        if not token_dir:
-            self.token_dir = _TOKEN_DIR
-        if not _token_file_name:
-            self._token_file_name = _TOKEN_FILE_NAME
-        _create_dir(self.token_dir)
-        self._token_file_path = path.join(self.token_dir, self._token_file_name)
-
+    def __init__(self, token_dir: str = _TOKEN_DIR, _token_file_name: str = _TOKEN_FILE_NAME):
+        _create_dir(token_dir)
+        self._token_file_path = path.join(token_dir, _token_file_name)
 
     def token_is_valid(self) -> bool:
         if self._token_file_exist():
@@ -61,28 +58,30 @@ class TokenManager:
         token_data = self._get_token_info(token)
         return int(token_data.expire_in_seconds)
 
-
-                ############################
-                ### Token File Managment ###
-                ############################
+        ############################
+        ### Token File Managment ###
+        ############################
 
     # Return boolean on existence of file that store the token
     def _token_file_exist(self) -> bool:
         return path.exists(path.expanduser(self._token_file_path))
 
-    #Read token from file
+    # Read token from file
     def _get_token_stored(self) -> str:
         file = open(self._token_file_path, "r")
+        token =file.read()
+        print(token)
         return file.read()
 
-    #Remove the file with token
+    # Remove the file with token
     def _delete_token_stored(self) -> bool:
         if path.exists(self._token_file_path):
-            remove(self._token_file_path)
+            os.remove(self._token_file_path)
 
     def _store_token(self, content) -> bool:
         if self._token_file_exist():
-           self._delete_token_stored()
+            self._delete_token_stored()
+        Path(self._token_file_path).touch()
         file = open(self._token_file_path, "w")
         file.write(content)
 
@@ -91,9 +90,9 @@ class TokenManager:
         token_data = self._get_token_info(token)
         return not token_data.expires_in_seconds > 0
 
-                ############################
-                ### Interaction with API ###
-                ############################
+        ############################
+        ### Interaction with API ###
+        ############################
 
     # Return a JSON with info on the token
     #   "resource_owner_id": int
@@ -112,8 +111,3 @@ class TokenManager:
         client = BackendApplicationClient(client_id=client_id)
         api = OAuth2Session(client=client)
         return api.fetch_token(_FT_TOKEN_URL, client_id=client_id, client_secret=client_secret)
-
-
-
-
-
