@@ -3,6 +3,7 @@ import genericpath
 from requests_oauthlib import OAuth2Session
 from oauthlib.oauth2 import BackendApplicationClient
 from TokenManager import TokenManager
+from ApiManager import ApiManager
 import requests
 import json
 import re
@@ -11,7 +12,6 @@ import time
 client_id = 'YourClientId'
 client_secret = 'YourClientSecret'
 base_url = 'https://api.intra.42.fr/v2/'
-core_request = 'campus/1/locations'
 filter = '?filter[active]=true'
 
 
@@ -47,18 +47,15 @@ else:
             print("Your Token will expire at " + TokenManager.get_expire_date(token, "%H:%M:%S"))
 print('Token is ' + token)
 
-
-client = BackendApplicationClient(client_id=client_id)
-api = OAuth2Session(client=client)
-token = api.fetch_token(token_url='https://api.intra.42.fr/oauth/token', client_id=client_id,
-                        client_secret=client_secret)
-
+ApiManager = ApiManager(token, base_url)
 page = 0
 first = True
 while first or len(users) == 100:
     first = False
-    requeststr = base_url + core_request + filter + '&page[size]=100&page[number]=' + str(page)
-    response = api.get(requeststr)
+    filters = {'filter[active]': 'true'}
+    params = {'page[size]': '100', 'page[number]': 0}
+    core_request = 'campus/1/locations'
+    response = ApiManager.get(core_request, filters, params)
     if (response.status_code != 200):
         print(response.status_code)
         print(response.reason)
@@ -75,5 +72,5 @@ while first or len(users) == 100:
             print('Beginig: ' + str(user["begin_at"]))
             print('Finish: ' + str(user["end_at"]))
             print("-----------------------------------------")
-    page += 1
-    print('page: ' + str(page))
+    params['page[number]'] += 1
+    print('page: ' + str(params['page[number]']))

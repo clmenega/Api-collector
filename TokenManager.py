@@ -39,7 +39,7 @@ class TokenManager:
         return False
 
     # Store and return a new token
-    def get_new_token(self, client_id, client_secret) -> str:
+    def get_new_token(self, client_id: str, client_secret: str) -> str:
         token_obj = self._get_new_token(client_id, client_secret)
         token_str = token_obj['access_token']
         self._store_token(token_str)
