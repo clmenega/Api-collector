@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 import os.path as path
 # #import os.listdir as listdir
@@ -34,29 +35,30 @@ class TokenManager:
     def token_is_valid(self) -> bool:
         if self._token_file_exist():
             token = self._get_token_stored()
-            return not self._token_is_outdate(token)
+            return not (len(token) == 0 or self._token_is_outdate(token))
         return False
 
     # Store and return a new token
     def get_new_token(self, client_id, client_secret) -> str:
-        token = self._get_new_token(client_id, client_secret)
-        self._store_token(token)
-        return token
+        token_obj = self._get_new_token(client_id, client_secret)
+        token_str = token_obj['access_token']
+        self._store_token(token_str)
+        return token_str
 
     # Return a string with the expire date of the given token
     def get_expire_date(self, token: str, date_format: str) -> str:
         token_data = self._get_token_info(token)
-        expire_seconds = int(token_data.expire_in_seconds)
+        expire_seconds = int(token_data['expires_in_seconds'])
         curent_date = datetime.datetime.now()
         expire_time = curent_date + datetime.timedelta(0, expire_seconds)
         return expire_time.strftime(date_format)
 
     def get_stored_token(self) -> str:
-        self._get_token_stored()
+        return self._get_token_stored()
 
     def get_ttl(self, token) -> int:
         token_data = self._get_token_info(token)
-        return int(token_data.expire_in_seconds)
+        return int(token_data['expires_in_seconds'])
 
         ############################
         ### Token File Managment ###
@@ -69,9 +71,9 @@ class TokenManager:
     # Read token from file
     def _get_token_stored(self) -> str:
         file = open(self._token_file_path, "r")
-        token =file.read()
-        print(token)
-        return file.read()
+        token = file.readline()
+        file.close()
+        return token
 
     # Remove the file with token
     def _delete_token_stored(self) -> bool:
@@ -88,7 +90,7 @@ class TokenManager:
     # Return boolean on validity of token
     def _token_is_outdate(self, token: str) -> bool:
         token_data = self._get_token_info(token)
-        return not token_data.expires_in_seconds > 0
+        return not token_data['expires_in_seconds'] > 0
 
         ############################
         ### Interaction with API ###
@@ -102,7 +104,7 @@ class TokenManager:
     #       "uid": sting
     #   "created_at": int
     def _get_token_info(self, token: str) -> JsonDict:
-        headers = {'Authorization': 'bearer' + token}
+        headers = {'Authorization': 'bearer ' + token}
         response = requests.get(_FT_TOKEN_INFO_URL, headers=headers)
         return response.json()
 

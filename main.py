@@ -45,6 +45,8 @@ else:
             token = create_new_token()
         else:
             print("Your Token will expire at " + TokenManager.get_expire_date(token, "%H:%M:%S"))
+print('Token is ' + token)
+
 
 client = BackendApplicationClient(client_id=client_id)
 api = OAuth2Session(client=client)
