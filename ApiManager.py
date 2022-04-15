@@ -1,4 +1,6 @@
 import requests
+from requests import Response
+
 
 class ApiManager:
     def __init__(self, token: str, base_url: str):
@@ -7,7 +9,7 @@ class ApiManager:
             base_url = base_url[:-1]
         self.base_url = base_url
 
-    def get(self, core_request: str, filters: dict, params: dict, headers: dict = {}):
+    def get(self, core_request: str, filters: dict, params: dict, headers: dict = {}) -> Response:
         headers.update({'Authorization': 'bearer ' + self.token})
         params.update(filters)
         if not core_request.startswith('/'):

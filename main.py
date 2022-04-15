@@ -27,39 +27,7 @@ def create_new_token() -> str:
     return token
 
 
-# Check if Token is present and Valide
-TokenManager = TokenManager()
-if not TokenManager.token_is_valid():
-    print("Your token is out of date please enter credential to get a new one")
-    token = create_new_token()
-else:
-    token = TokenManager.get_stored_token()
-    token_ttl = TokenManager.get_ttl(token)
-    if token_ttl < 600:
-        print("Your Token will expire in " + convert_seconds_to_minutes(token_ttl))
-        response = ''
-        while response not in ["y", "n", "yes", "no"]:
-            response = input("Do you want to create a new token ? y/n")
-            response = response.lower()
-        if response in ["y", "yes"]:
-            token = create_new_token()
-        else:
-            print("Your Token will expire at " + TokenManager.get_expire_date(token, "%H:%M:%S"))
-print('Token is ' + token)
-
-ApiManager = ApiManager(token, base_url)
-first = True
-filters = {'filter[active]': 'true'}
-params = {'page[size]': '100', 'page[number]': 0}
-while first or len(users) == 100:
-    first = False
-    core_request = 'campus/1/locations'
-    response = ApiManager.get(core_request, filters, params)
-    if (response.status_code != 200):
-        print(response.status_code)
-        print(response.reason)
-        break
-    users = json.loads(response.content)
+def print_users(users):
     for user in users:
         match = re.match(r"[e]([1-3])[r](\d{1,2})[p](\d{1,2})", str(user["host"]))
         if match:
@@ -71,5 +39,44 @@ while first or len(users) == 100:
             print('Beginig: ' + str(user["begin_at"]))
             print('Finish: ' + str(user["end_at"]))
             print("-----------------------------------------")
+
+
+def setup_token() -> str:
+    # Check if Token is present and Valid
+    TokenManager = TokenManager()
+    if not TokenManager.token_is_valid():
+        print("Your token is out of date please enter credential to get a new one")
+        token = create_new_token()
+    else:
+        token = TokenManager.get_stored_token()
+        token_ttl = TokenManager.get_ttl(token)
+        if token_ttl < 600:
+            print("Your Token will expire in " + convert_seconds_to_minutes(token_ttl))
+            user_response = ''
+            while user_response not in ["y", "n", "yes", "no"]:
+                user_response = input("Do you want to create a new token ? y/n")
+                user_response = user_response.lower()
+            if user_response in ["y", "yes"]:
+                token = create_new_token()
+            else:
+                print("Your Token will expire at " + TokenManager.get_expire_date(token, "%H:%M:%S"))
+    return token
+
+
+access_token = setup_token()
+ApiManager = ApiManager(access_token, base_url)
+first = True
+filters = {'filter[active]': 'true'}
+params = {'page[size]': '100', 'page[number]': 0}
+core_request = 'campus/1/locations'
+while first or len(users) == 100:
+    first = False
+    response = ApiManager.get(core_request, filters, params)
+    if response.status_code != 200:
+        print(response.status_code)
+        print(response.reason)
+        break
+    users = json.loads(response.content)
+    print_users(users)
     params['page[number]'] += 1
     print('page: ' + str(params.get('page[number]')))
