@@ -48,12 +48,11 @@ else:
 print('Token is ' + token)
 
 ApiManager = ApiManager(token, base_url)
-page = 0
 first = True
+filters = {'filter[active]': 'true'}
+params = {'page[size]': '100', 'page[number]': 0}
 while first or len(users) == 100:
     first = False
-    filters = {'filter[active]': 'true'}
-    params = {'page[size]': '100', 'page[number]': 0}
     core_request = 'campus/1/locations'
     response = ApiManager.get(core_request, filters, params)
     if (response.status_code != 200):
@@ -73,4 +72,4 @@ while first or len(users) == 100:
             print('Finish: ' + str(user["end_at"]))
             print("-----------------------------------------")
     params['page[number]'] += 1
-    print('page: ' + str(params['page[number]']))
+    print('page: ' + str(params.get('page[number]')))
