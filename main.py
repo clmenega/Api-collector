@@ -1,8 +1,11 @@
 import genericpath
+from datetime import datetime, timedelta
+from os import path
 
 from requests_oauthlib import OAuth2Session
 from oauthlib.oauth2 import BackendApplicationClient
 from TokenManager import TokenManager
+from Collector import Collector
 from ApiManager import ApiManager
 import requests
 import json
@@ -22,34 +25,36 @@ def convert_seconds_to_minutes(seconds: int) -> str:
 def create_new_token() -> str:
     client_id = input('client_id:')
     client_secret = input('client_secret:')
-    token = TokenManager.get_new_token(client_id, client_secret)
-    print("Your token have been created and will expire " + TokenManager.get_expire_date(token, '%A %d %B at %H:%M:%S'))
+    print(client_id)
+    print(client_secret)
+    token_manager = TokenManager()
+    token = token_manager.get_new_token(client_id, client_secret)
+    print("Your token have been created and will expire " + token_manager.get_expire_date(token, '%A %d %B at %H:%M:%S'))
     return token
 
 
 def print_users(users):
     for user in users:
-        match = re.match(r"[e]([1-3])[r](\d{1,2})[p](\d{1,2})", str(user["host"]))
-        if match:
-            print('floor: ' + match.group(1))
-            print('rank: ' + match.group(2))
-            print('station: ' + match.group(3))
-            print('Id: ' + str(user["id"]))
-            print('Host: ' + str(user["host"]))
-            print('Beginig: ' + str(user["begin_at"]))
-            print('Finish: ' + str(user["end_at"]))
-            print("-----------------------------------------")
+        print('floor: ' + user["floor"])
+        print('rank: ' + user["rank"])
+        print('station: ' + user["station"])
+        print('Id: ' + str(user["Id"]))
+        print('login: ' + user["login"])
+        print('Host: ' + user["host"])
+        print('Beginning: ' + user["Beginning"])
+        print('Finish: ' + str(user["Finish"]))
+        print("-----------------------------------------")
 
 
 def setup_token() -> str:
     # Check if Token is present and Valid
-    TokenManager = TokenManager()
-    if not TokenManager.token_is_valid():
+    token_manager = TokenManager()
+    if not token_manager.token_is_valid():
         print("Your token is out of date please enter credential to get a new one")
         token = create_new_token()
     else:
-        token = TokenManager.get_stored_token()
-        token_ttl = TokenManager.get_ttl(token)
+        token = token_manager.get_stored_token()
+        token_ttl = token_manager.get_ttl(token)
         if token_ttl < 600:
             print("Your Token will expire in " + convert_seconds_to_minutes(token_ttl))
             user_response = ''
@@ -59,24 +64,13 @@ def setup_token() -> str:
             if user_response in ["y", "yes"]:
                 token = create_new_token()
             else:
-                print("Your Token will expire at " + TokenManager.get_expire_date(token, "%H:%M:%S"))
+                print("Your Token will expire at " + token_manager.get_expire_date(token, "%H:%M:%S"))
     return token
 
 
 access_token = setup_token()
-ApiManager = ApiManager(access_token, base_url)
-first = True
-filters = {'filter[active]': 'true'}
-params = {'page[size]': '100', 'page[number]': 0}
-core_request = 'campus/1/locations'
-while first or len(users) == 100:
-    first = False
-    response = ApiManager.get(core_request, filters, params)
-    if response.status_code != 200:
-        print(response.status_code)
-        print(response.reason)
-        break
-    users = json.loads(response.content)
-    print_users(users)
-    params['page[number]'] += 1
-    print('page: ' + str(params.get('page[number]')))
+collector = Collector(access_token)
+users = collector.get_active_now()
+# print(users[0])
+print_users(users)
+

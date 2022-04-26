@@ -28,9 +28,9 @@ def _create_dir(dir_path) -> bool:
 
 
 class TokenManager:
-    def __init__(self, token_dir: str = _TOKEN_DIR, _token_file_name: str = _TOKEN_FILE_NAME):
+    def __init__(self, token_dir: str = _TOKEN_DIR, token_file_name: str = _TOKEN_FILE_NAME):
         _create_dir(token_dir)
-        self._token_file_path = path.join(token_dir, _token_file_name)
+        self._token_file_path = path.join(token_dir, token_file_name)
 
     def token_is_valid(self) -> bool:
         if self._token_file_exist():
