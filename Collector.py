@@ -14,6 +14,7 @@ class Collector:
     @staticmethod
     def get_connections_object(users: json) -> list:
         connections = []
+        date = datetime.now()
         for user in users:
             match = re.match(r"[e]([1-3])[r](\d{1,2})[p](\d{1,2})", str(user["host"]))
             connection = {}
@@ -26,6 +27,7 @@ class Collector:
                 connection["host"] = user["host"]
                 connection["Beginning"] = user["begin_at"]
                 connection["Finish"] = user["end_at"]
+                connection["Date"] = date.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
                 connections.append(connection)
         return connections
 
@@ -38,7 +40,8 @@ class Collector:
             first = False
             request["params"].update({'page[number]': page})
             response = api_manager.get(request["core_request"], request["filters"], request["params"])
-            # print(response)
+            print(request["filters"])
+            print(response)
             if response.status_code != 200:
                 print(response.status_code)
                 print(response.reason)
@@ -49,16 +52,21 @@ class Collector:
         return connections
 
     # get new connetion in cluster from date - plage to date plage in seconds
-    def get_new_connection_on_plage(self, date: datetime, plage: str) -> json:
+    def get_new_connection_on_plage(self, date: datetime, plage: float) -> json:
         from_date = date - timedelta(seconds=plage)
+        from_date -= timedelta(hours=2)
+        date -= timedelta(hours=2)
         api_manager = ApiManager(self.token, self.base_url)
         request = {}
         request["core_request"] = 'campus/1/locations'
-        request["filters"] = {'filter[active]': 'true',
-                   'range[begin_at]': from_date.strftime('%Y-%m-%dT%H:%M:%S.%f%z') + ','
-                                      + date.strftime('%Y-%m-%dT%H:%M:%S.%f%z')}
+        request["filters"] = {'filter[active]': 'false',
+                   'range[end_at]': from_date.strftime('%Y-%m-%dT%H:%M:%S.%f%ZZ') + ','
+                                      + date.strftime('%Y-%m-%dT%H:%M:%S.%f%ZZ')}
         request["params"] = {'page[size]': '100'}
-        return Collector.get_all_pages(api_manager, request)
+        finished = Collector.get_all_pages(api_manager, request)
+        collector = Collector(self.token)
+        connections = finished + Collector.get_active_now(collector)
+        return connections
 
     def get_active_now(self) -> json:
         api_manager = ApiManager(self.token, self.base_url)

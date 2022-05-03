@@ -44,6 +44,7 @@ def print_users(users):
         print('Host: ' + user["host"])
         print('Beginning: ' + user["Beginning"])
         print('Finish: ' + str(user["Finish"]))
+        print('Date: ' + str(user["Date"]))
         print("-----------------------------------------")
 
 
@@ -71,9 +72,9 @@ def setup_token() -> str:
 
 access_token = setup_token()
 collector = Collector(access_token)
-users = collector.get_active_now()
+# users = collector.get_active_now()
 # print(users[0])
-# print_users(users)
-AWSManager.convert_connections_to_csv(users)
-AWSManager.insert_connection(datetime.now(), users)
-print(type(users[0].keys()))
+users = collector.get_new_connection_on_plage(datetime.now(), 900)
+print_users(users)
+# AWSManager.insert_connection(datetime.now(), users)
+# print(type(users[0].keys()))
