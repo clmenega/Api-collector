@@ -6,6 +6,7 @@ from requests_oauthlib import OAuth2Session
 from oauthlib.oauth2 import BackendApplicationClient
 from TokenManager import TokenManager
 from Collector import Collector
+from AWSManager import AWSManager
 from ApiManager import ApiManager
 import requests
 import json
@@ -72,5 +73,7 @@ access_token = setup_token()
 collector = Collector(access_token)
 users = collector.get_active_now()
 # print(users[0])
-print_users(users)
-
+# print_users(users)
+AWSManager.convert_connections_to_csv(users)
+AWSManager.insert_connection(datetime.now(), users)
+print(type(users[0].keys()))

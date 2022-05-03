@@ -14,5 +14,5 @@ class ApiManager:
         params.update(filters)
         if not core_request.startswith('/'):
             core_request = '/' + core_request
-        print(self.base_url + core_request)
+        # print(self.base_url + core_request)
         return requests.get(self.base_url + core_request, params=params, headers=headers)

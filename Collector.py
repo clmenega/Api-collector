@@ -32,16 +32,19 @@ class Collector:
     @staticmethod
     def get_all_pages(api_manager: ApiManager, request):
         connections = []
+        page = 0
         first = True
         while first or len(users) == 100:
             first = False
+            request["params"].update({'page[number]': page})
             response = api_manager.get(request["core_request"], request["filters"], request["params"])
-            print(response)
+            # print(response)
             if response.status_code != 200:
                 print(response.status_code)
                 print(response.reason)
                 break
             users = json.loads(response.content)
+            page += 1
             connections = connections + Collector.get_connections_object(users)
         return connections
 
@@ -54,7 +57,7 @@ class Collector:
         request["filters"] = {'filter[active]': 'true',
                    'range[begin_at]': from_date.strftime('%Y-%m-%dT%H:%M:%S.%f%z') + ','
                                       + date.strftime('%Y-%m-%dT%H:%M:%S.%f%z')}
-        request["params"] = {'page[size]': '100', 'page[number]': 0}
+        request["params"] = {'page[size]': '100'}
         return Collector.get_all_pages(api_manager, request)
 
     def get_active_now(self) -> json:
