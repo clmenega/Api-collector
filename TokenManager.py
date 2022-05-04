@@ -28,9 +28,9 @@ def _create_dir(dir_path) -> bool:
 
 
 class TokenManager:
-    def __init__(self, token_dir: str = _TOKEN_DIR, _token_file_name: str = _TOKEN_FILE_NAME):
+    def __init__(self, token_dir: str = _TOKEN_DIR, token_file_name: str = _TOKEN_FILE_NAME):
         _create_dir(token_dir)
-        self._token_file_path = path.join(token_dir, _token_file_name)
+        self._token_file_path = path.join(token_dir, token_file_name)
 
     def token_is_valid(self) -> bool:
         if self._token_file_exist():
@@ -39,7 +39,7 @@ class TokenManager:
         return False
 
     # Store and return a new token
-    def get_new_token(self, client_id, client_secret) -> str:
+    def get_new_token(self, client_id: str, client_secret: str) -> str:
         token_obj = self._get_new_token(client_id, client_secret)
         token_str = token_obj['access_token']
         self._store_token(token_str)
@@ -90,7 +90,7 @@ class TokenManager:
     # Return boolean on validity of token
     def _token_is_outdate(self, token: str) -> bool:
         token_data = self._get_token_info(token)
-        return not token_data['expires_in_seconds'] > 0
+        return token_data['status_code'] != 200 or not token_data['expires_in_seconds'] > 0
 
         ############################
         ### Interaction with API ###
@@ -106,7 +106,9 @@ class TokenManager:
     def _get_token_info(self, token: str) -> JsonDict:
         headers = {'Authorization': 'bearer ' + token}
         response = requests.get(_FT_TOKEN_INFO_URL, headers=headers)
-        return response.json()
+        token_info: JsonDict = response.json()
+        token_info.update({'status_code': response.status_code})
+        return token_info
 
     # Return the access token take client_id and client_secret of your 42 application
     def _get_new_token(self, client_id: str, client_secret: str) -> str:
